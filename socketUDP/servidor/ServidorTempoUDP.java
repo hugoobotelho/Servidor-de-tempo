@@ -64,7 +64,7 @@ public class ServidorTempoUDP {
                     LocalTime tempoAtual = LocalTime.now();
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
                     String horaFormatada = tempoAtual.format(formatter);
-                    byte[] dadosSaida = String.format("SEND|%s", horaFormatada).getBytes();
+                    byte[] dadosSaida = String.format("RES|%s", horaFormatada).getBytes();
                     DatagramPacket pacoteResposta = new DatagramPacket(dadosSaida, dadosSaida.length, enderecoCliente, 9876); // Porta fixa para resposta
                     servidorSocket.send(pacoteResposta);
                 } else {

@@ -30,10 +30,10 @@ public class Principal extends Application {
     private Region spacer = new Region(); // Espaçador entre o header e o conteúdo
     TelaRelogio telaRelogio = new TelaRelogio(this);
     TelaConfiguracoes telaConfiguracoes = new TelaConfiguracoes(this);
-    private ClienteTempoUDP clienteUDP; // Instancia do cliente UDP
-    private long inicioTimer = 0; // Guarda o tempo de envio
+    private ClienteTempoTCP clienteTCP; // Instancia do cliente TCP
 
     public void start(Stage primaryStage) {
+
         root.setStyle("-fx-background-color: #07121F; -fx-padding: 24px;");
         Scene scene = new Scene(root, 750, 430);
         primaryStage.setScene(scene);
@@ -58,13 +58,13 @@ public class Principal extends Application {
         // Define o layout principal na raiz
         root.getChildren().setAll(mainLayout);
 
-        // Criando e conectando o cliente UDP
-        // criarClienteUDP(ipServidor, 6789);
+        // Criando e conectando o cliente TCP
+        criarClienteTCP(ipServidor, 6789);
 
         // Configura o evento de encerramento do aplicativo
         primaryStage.setOnCloseRequest(t -> {
-            if (clienteUDP != null) {
-                clienteUDP.fechar(); // Fecha o cliente UDP
+            if (clienteTCP != null) {
+                // clienteTCP.fechar(); // Fecha o cliente TCP
             }
             Platform.exit();
             System.exit(0);
@@ -72,43 +72,43 @@ public class Principal extends Application {
     }
 
     /**
-     * Método para criar o cliente UDP e iniciar a escuta de mensagens.
+     * Método para criar o cliente TCP e iniciar a escuta de mensagens.
      */
-    public void criarClienteUDP(String ipServidor, int porta) {
+    public void criarClienteTCP(String ipServidor, int porta) {
         try {
-            if (clienteUDP != null){
-                clienteUDP.setIpServidor(ipServidor); //atualiza o ip do servidor caso o usuario mude na tela de configuracoes
+            if (clienteTCP != null){
+                clienteTCP.setIpServidor(ipServidor); //atualiza o ip do servidor caso o usuario mude na tela de configuracoes
             }
             else{
-                clienteUDP = new ClienteTempoUDP(ipServidor, porta); // Inicializa o cliente UDP
+                clienteTCP = new ClienteTempoTCP(this, ipServidor, porta); // Inicializa o cliente TCP
             }
-            System.out.println("Cliente UDP criado e conectado ao servidor " + ipServidor + ":" + porta);
-            iniciarThreadRecebimentoUDP(); // Inicia a thread para receber mensagens via UDP
+            System.out.println("Cliente TCP criado e conectado ao servidor " + ipServidor + ":" + porta);
+            // iniciarThreadRecebimentoTCP(); // Inicia a thread para receber mensagens via TCP
         } catch (Exception e) {
-            System.err.println("Erro ao criar ClienteUDP: " + e.getMessage());
+            System.err.println("Erro ao criar ClienteTCP: " + e.getMessage());
         }
     }
  
     /**
-     * Método que inicia uma thread para escutar mensagens recebidas via UDP.
+     * Método que inicia uma thread para escutar mensagens recebidas via TCP.
      */
-    private void iniciarThreadRecebimentoUDP() {
-        new Thread(() -> {
-            try {
-                while (true) {
-                    String mensagemRecebida = clienteUDP.receberHorario(); // Aguarda mensagens do servidor
-                    System.out.println("Mensagem recebida via UDP: " + mensagemRecebida);
+    // private void iniciarThreadRecebimentoTCP() {
+    //     new Thread(() -> {
+    //         try {
+    //             while (true) {
+    //                 String mensagemRecebida = clienteTCP.receberHorario(); // Aguarda mensagens do servidor
+    //                 System.out.println("Mensagem recebida via TCP: " + mensagemRecebida);
 
-                    // Criar uma thread para processar e renderizar a mensagem recebida
-                    new Thread(() -> processarMensagemRecebida(mensagemRecebida)).start();
-                }
-            } catch (Exception e) {
-                System.err.println("Erro ao receber mensagem UDP: " + e.getMessage());
-            }
-        }).start();
-    }
+    //                 // Criar uma thread para processar e renderizar a mensagem recebida
+    //                 new Thread(() -> processarMensagemRecebida(mensagemRecebida)).start();
+    //             }
+    //         } catch (Exception e) {
+    //             System.err.println("Erro ao receber mensagem TCP: " + e.getMessage());
+    //         }
+    //     }).start();
+    // }
 
-    private void processarMensagemRecebida(String mensagemRecebida) {
+    public void processarMensagemRecebida(String mensagemRecebida, long tempoDecorrido) {
         try {
             // Separar os campos da mensagem
             String[] partes = mensagemRecebida.split("\\|");
@@ -116,28 +116,33 @@ public class Principal extends Application {
                 System.err.println("Formato de mensagem inválido: " + mensagemRecebida);
                 return;
             }
-
+    
             String horario = partes[1];
-
+    
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-
+    
             // Converte a string para LocalTime
             LocalTime horaConvertida = LocalTime.parse(horario, formatter);
-
-
-            long tempoDecorrido = pararTimer(); // Tempo de ida e volta em milissegundos
-            long tempoAjustadoNanos = (tempoDecorrido / 2) * 1_000_000; // Converte milissegundos para nanossegundos
-             
-            LocalTime horaCorrigida = horaConvertida.plusNanos(tempoAjustadoNanos);
     
-            TelaRelogio.atualizarTempoAtual(horaCorrigida);
+            // Calcula o tempo ajustado
+            long tempoAjustadoNanos = (tempoDecorrido / 2) * 1_000_000; // Converte milissegundos para nanossegundos
  
-            System.out.println("Hora convertida: " + horaConvertida + " e hora corrigida: " + horaCorrigida + " tempo ajustado: " + tempoAjustadoNanos);
+            // Corrige a hora
+            LocalTime horaCorrigida = horaConvertida.plusNanos(tempoAjustadoNanos);
+        
+            // Atualiza a interface gráfica
+            TelaRelogio.atualizarTempoAtual(horaCorrigida);
 
+            System.out.println("Hora convertida: " + horaConvertida + 
+                               " | Hora corrigida: " + horaCorrigida + 
+                               " | Tempo ajustado: " + tempoAjustadoNanos + " ns" +
+                               " | Tempo decorrido: " + tempoDecorrido );
+    
         } catch (Exception e) {
             System.err.println("Erro ao processar mensagem recebida: " + e.getMessage());
         }
     }
+    
 
     // Método para configurar o cabeçalho
     private void configurarHeader() {
@@ -187,32 +192,8 @@ public class Principal extends Application {
         return ipServidor;
     }
 
-    // public void setTempoAtual(LocalTime tempoAtual) {
-    //     this.tempoAtual = tempoAtual;
-    // }
-
-    // public LocalTime getTempoAtual() {
-    //     System.out.println(tempoAtual);
-    //     return tempoAtual;
-    // }
-
-    public ClienteTempoUDP getClienteUDP() {
-        return clienteUDP;
-    }
-
-    public void iniciarTimer() {
-        inicioTimer = System.currentTimeMillis();
-    }
-
-    public long pararTimer() {
-        if (inicioTimer == 0) {
-            System.out.println("caiu aqui");
-            return 0;
-        }
-        long tempoDecorrido = System.currentTimeMillis() - inicioTimer;
-        System.out.println("Entao caiu aqui e o tempo é: " + tempoDecorrido);
-        inicioTimer = 0;
-        return tempoDecorrido;
+    public ClienteTempoTCP getClienteTCP() {
+        return clienteTCP;
     }
 
     public static void main(String[] args) {

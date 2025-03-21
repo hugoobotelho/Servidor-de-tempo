@@ -95,8 +95,8 @@ public class TelaRelogio {
         } else {
             System.out.println("Atualizando relogio com IP: " + app.getIpServidor());
             String requisisaoAPDU = "REQ";
-            app.iniciarTimer();
-            app.getClienteUDP().enviarRequisicao(requisisaoAPDU);
+            // app.iniciarTimer();
+            app.getClienteTCP().enviarRequisicao(requisisaoAPDU);
         }
     }
 
