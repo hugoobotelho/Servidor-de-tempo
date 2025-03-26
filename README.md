@@ -1,4 +1,4 @@
-# Jogo de Cartas
+# Servidor de Tempo
 
 ## Descrição
 Este é um servidor de tempo, onde duas máquinas comunicam-se para demonstrar o funcionamento real do serviço. Uma máquina atua como o cliente, solicitando a requisição de tempo, enquanto a outra serve como o servidor, oferecendo o serviço de tempo.
