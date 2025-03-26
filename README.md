@@ -33,7 +33,7 @@ java Principal
 ```
 
 ## Funcionamento
-<img src="https://github.com/hugoobotelho/Servidor-de-tempo/funcionamento.gif" width="700">
+![Funcionamento](https://github.com/hugoobotelho/Servidor-de-tempo/raw/main/funcionamento.gif)
 
 ## Contribuição
 Se quiser contribuir com melhorias, fique à vontade para abrir um Pull Request.
